@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grupp Generator</title>
+    <style>
+        #lines {
+            width: 50px;
+            height: 50px;
+            border: none;
+            background-color: transparent;
+            font-size: 80px;
+            position: absolute;
+            top: 0px;
+            color: white;
+            z-index: 1;
+        }
+
+        #texture-container {
+            position: absolute;
+            width: 300px; /* Adjust to cover the entire screen */
+            height: 100%;
+            background-color: lightyellow;
+            top: 0px;
+            display: none;
+            z-index: 0; /* Ensure the texture is behind other elements */
+        }
+        body{font-family:Arial,sans-serif;background:#f7f7f7;margin:0;padding:0;transition:background .3s ease}
+        body.dark-mode{background:#000}
+        header{background:#007bff;color:#fff;text-align:center;padding:20px 0}
+        .container{max-width:800px;margin:0 auto;padding:20px;background:#fff;box-shadow:0 0 10px rgba(0,0,0,0);transition:background .3s ease}
+        .container.dark-mode{background:#000}
+        .form-group{margin-bottom:20px}
+        .form-group label{display:block;font-weight:bold;margin-bottom:5px}
+        .form-group input[type="text"],.form-group textarea,.form-group input[type="number"]{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:16px;background:#fff;transition:background .3s ease}
+        .form-group.dark-mode input[type="text"],.form-group.dark-mode textarea,.form-group.dark-mode input[type="number"]{background:#000}
+        .form-group button{background:#007bff;color:#fff;border:none;border-radius:4px;padding:10px 20px;font-size:16px;cursor:pointer}
+        .form-group.dark-mode button{background:#000}
+        .switch{display:inline-block;position:relative;width:60px;height:34px;left:280px;top:169px}
+        .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;transition:0.4s;border-radius:34px}
+        .slider:before{position:absolute;content:"";height:26px;width:26px;left:4px;bottom:4px;background:white;transition:0.4s;border-radius:50%}
+        input:checked+.slider{background:#2196F3}
+        input:checked+.slider:before{transform:translateX(26px)}
+        .dark-mode-text.dark-mode{color:#fff}
+        h2,h3{font-size:20px;margin:20px 0}
+        ul{list-style-type:none;padding:0}
+        li{padding:5px 0}
+        .error-message{color:#f00;margin-top:10px}
+        #generateRandomButton{background:#28a745;color:#fff;border:none;border-radius:4px;padding:10px 20px;font-size:16px;cursor:pointer;margin-top:10px}
+        #generateRandomButton.dark-mode{background:#218838}
+        .lines{width: 50px; height: 50px; border: none; background-color: transparent; font-size: 80px; position: absolute; top: 0px; color: white; }
+        .Groups{width: 450px; height: 70px; background-color: transparent; border: none; font-size: 30px; font-family: arial; left: -185px; position: absolute; top: 30px; text-align: right;}
+    </style>
+</head>
+<body>
+    <header><h1>Grupp Generator</h1></header>
+    <div class="container">
+        <div id="errorMessage" class="error-message" style="display:none;"></div>
+        <div class="switch-container">
+            <label class="switch">
+                <input type="checkbox" id="darkModeSwitch" onclick="toggleDarkMode()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <form id="groupForm">
+            <div class="form-group">
+                <label for="textboxvalue">Ange namn:</label>
+                <textarea id="textboxvalue" name="textboxvalue" rows="4" aria-label="Enter student names"></textarea>
+                <button type="button" id="generateRandomButton" onclick="generateRandomNames()">Generera Slumpmässiga Namn</button>
+            </div>
+            <div class="form-group">
+                <label for="groupsize">Hur många personer per grupp:</label>
+                <input type="text" id="groupsize" name="groupsize" pattern="\d+" title="Please enter a positive integer" required aria-label="Enter group size">
+            </div>
+            <div class="form-group">
+                <button type="button" class="button" onclick="generateGroups()">Generera Grupp</button>
+                <button type="button" class="button" onclick="resetForm()">Återställ</button>
+            </div>
+        </form>
+        <h2 id="groupsHeader" style="display:none;"></h2>
+        <ul id="groupsList"></ul>
+    </div>
+    <button class="lines" id="show-texture-button" onclick="showTexture(),toggleButton()">☰</button>
+    <div id="texture-container">
+        <a href="https://lolsamet.github.io/Derivata/" class="Groups">Derivata Räknare</a>
+    </div>
+    <script>
+        function readUsernamesFile(callback){var xhr=new XMLHttpRequest();xhr.onreadystatechange=function(){if(xhr.readyState===4&&xhr.status===200){var usernames=xhr.responseText.split('\n').filter(Boolean);callback(usernames);}};xhr.open('GET','Usernames.txt',true);xhr.send();}
+        function generateRandomNames(){readUsernamesFile(function(usernames){var textbox=document.getElementById("textboxvalue");textbox.value="";var numberOfNames=Math.floor(Math.random()*(100-10+1))+10;var shuffledNames=usernames.slice().sort(()=>Math.random()-0.5);var uniqueNames=[...new Set(shuffledNames.slice(0,numberOfNames))];textbox.value=uniqueNames.join("\n");});}
+        function capitalizeFirstLetter(string){return string.replace(/\b\w/g,(char)=>char.toUpperCase());}
+        function generateGroups(){var eleverInput=document.getElementById("textboxvalue").value;var eleverList=eleverInput.replace(/[.,]/g,'').split('\n').filter(Boolean);eleverList=eleverList.map(name=>capitalizeFirstLetter(name.toLowerCase()));eleverList=[...new Set(eleverList)];var groupSizeInput=document.getElementById("groupsize").value;if(!/^\d+$/.test(groupSizeInput)){displayErrorMessage("Please enter a valid positive integer for the group size.");return;}var groupSize=parseInt(groupSizeInput);if(groupSize>=eleverList.length){displayErrorMessage("Group size cannot be equal to or larger than the total number of members.");return;}var groups=[];for(var i=eleverList.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));[eleverList[i],eleverList[j]]=[eleverList[j],eleverList[i]];}for(var i=0;i<eleverList.length;i+=groupSize){groups.push(eleverList.slice(i,i+groupSize));}displayGroups(groups);}
+        function displayGroups(groups){var groupsHeader=document.getElementById("groupsHeader");var groupsList=document.getElementById("groupsList");groupsHeader.style.display="block";groupsList.innerHTML="";for(var i=0;i<groups.length;i++){var groupHeader=document.createElement("h3");groupHeader.textContent="Grupp "+(i+1);var groupList=document.createElement("ul");for(var j=0;j<groups[i].length;j++){var studentItem=document.createElement("li");studentItem.textContent=groups[i][j];groupList.appendChild(studentItem);}var groupItem=document.createElement("li");groupItem.appendChild(groupHeader);groupItem.appendChild(groupList);groupsList.appendChild(groupItem);}document.getElementById("errorMessage").style.display="none";}
+        function resetForm(){document.getElementById("groupForm").reset();document.getElementById("groupsHeader").style.display="none";document.getElementById("groupsList").innerHTML="";document.getElementById("errorMessage").style.display="none";}
+        function displayErrorMessage(message){var errorMessage=document.getElementById("errorMessage");errorMessage.textContent=message;errorMessage.style.display="block";}
+        function toggleDarkMode(){document.body.classList.toggle('dark-mode');}
+        function showTexture() {
+            document.getElementById('texture-container').style.display = 'block';
+        }
+        function toggleButton() {
+            var button = document.getElementById('show-texture-button');
+            var textureContainer = document.getElementById('texture-container');
+            var currentLeft = parseInt(button.style.left || '0', 10);
+
+            if (currentLeft === 0) {
+                // Move the button to the left by 100px
+                button.style.left = '300px';
+                textureContainer.style.display = 'block';
+            } else {
+                // Move the button back to its original position
+                button.style.left = '0';
+                textureContainer.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
